@@ -1,0 +1,66 @@
+name: ForexFactory Discord Alerts
+
+on:
+  schedule:
+    # ── 5-min pre-news alerts ──────────────────────────────────────────────
+    # Runs every 5 min, Mon–Fri, 11:00–21:55 UTC (7 AM–5:55 PM ET, covers DST)
+    - cron: "*/5 11-21 * * 1-5"
+
+    # ── Daily morning summary ──────────────────────────────────────────────
+    # 8:00 AM ET = 12:00 UTC in EDT (summer) / 13:00 UTC in EST (winter)
+    # We run both so it works year-round regardless of DST
+    - cron: "0 12 * * 1-5"   # EDT (Mar–Nov)
+    - cron: "0 13 * * 1-5"   # EST (Nov–Mar)
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Mode to run (alert or summary)"
+        required: true
+        default: "alert"
+        type: choice
+        options:
+          - alert
+          - summary
+
+jobs:
+  forex-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── Determine mode ──────────────────────────────────────────────────
+      # Manual trigger → use the selected mode
+      # Scheduled at :00 UTC 12 or 13 → summary
+      # All other schedules → alert
+      - name: Determine run mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+          else
+            MINUTE=$(date -u +%M)
+            HOUR=$(date -u +%H)
+            if [ "$MINUTE" = "00" ] && ([ "$HOUR" = "12" ] || [ "$HOUR" = "13" ]); then
+              echo "mode=summary" >> $GITHUB_OUTPUT
+            else
+              echo "mode=alert" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Run forex alert
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python forex_alert.py ${{ steps.mode.outputs.mode }}
