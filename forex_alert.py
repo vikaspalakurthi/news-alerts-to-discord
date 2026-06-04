@@ -227,7 +227,7 @@ def build_summary_message(now: datetime, events: list):
         return None, False
 
     date_str = now.strftime("%A, %b %d")
-    lines = [f"📅  **USD News Today — {date_str}**", ""]
+    lines = [f"@everyone  :rotating_light:", f"📅  **USD News Today — {date_str}**", ""]
     for e in today_events:
         lines.append(format_event_line(e))
     lines += ["", "━━━━━━━━━━━━━━━━━━━━━━━━", "React 🔔 to get pinged 5 min before each event!"]
@@ -247,7 +247,7 @@ def build_alert_messages(now: datetime, events: list):
         impact = e["impact"].upper()
         time   = fmt_time(dt)
         lines  = [
-            f"@everyone",
+            f"@everyone  :rotating_light:",
             f"⚠️  **{impact} IMPACT NEWS IN ~5 MIN**  {emoji}",
             "",
             format_event_line(e),
