@@ -2,15 +2,10 @@ name: ForexFactory Discord Alerts
 
 on:
   schedule:
-    # ── 5-min pre-news alerts ──────────────────────────────────────────────
-    # Runs every 5 min, Mon–Fri, 11:00–21:55 UTC (7 AM–5:55 PM ET, covers DST)
+    # Runs every 5 min, Mon–Fri, 11:00–21:55 UTC (covers 7 AM–5:55 PM ET in both EDT/EST)
+    # The "Determine run mode" step below switches to summary at 12:00 UTC (8 AM EDT)
+    # or 13:00 UTC (8 AM EST) — all other runs fire as alert.
     - cron: "*/5 11-21 * * 1-5"
-
-    # ── Daily morning summary ──────────────────────────────────────────────
-    # 8:00 AM ET = 12:00 UTC in EDT (summer) / 13:00 UTC in EST (winter)
-    # We run both so it works year-round regardless of DST
-    - cron: "0 12 * * 1-5"   # EDT (Mar–Nov)
-    - cron: "0 13 * * 1-5"   # EST (Nov–Mar)
 
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
